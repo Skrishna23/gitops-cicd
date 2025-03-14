@@ -12,7 +12,7 @@ jobs:
   update_properties:
     runs-on: ubuntu-latest
     env:
-      GITOPS_REPO: "YourUsername/GitOpsRepo"  # 🔹 Replace with actual repo name
+      GITOPS_REPO: "Skrishna23/Project_NaaP"  # 🔹 Replace with actual repo name
       RELEASE_BRANCH: "releasemanagement"
       PROPERTIES_BRANCH: "dev-properties"
 
