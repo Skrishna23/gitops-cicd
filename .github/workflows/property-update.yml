@@ -26,24 +26,24 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Clone GitOps Repository
-        run: |
-          set -e
-          echo "Cloning GitOps repository '${{ env.GITOPS_REPO }}'..."
-          git clone --depth 1 https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ env.GITOPS_REPO }}.git gitops-repo
-          cd gitops-repo
-
-          git fetch origin "${{ env.PROPERTIES_BRANCH }}"
-
-          if git branch -r | grep -q "origin/${{ env.PROPERTIES_BRANCH }}"; then
-            git checkout -B "${{ env.PROPERTIES_BRANCH }}" "origin/${{ env.PROPERTIES_BRANCH }}"
-          else
-            echo "::error::[ERROR] Properties branch '${{ env.PROPERTIES_BRANCH }}' does not exist!"
-            exit 1
-          fi
-
-          echo "::notice::[SUCCESS] Checked out properties folder from '${{ env.PROPERTIES_BRANCH }}'."
+          
+      - name: Checkout another repository
+        uses: actions/checkout@v4
+        with:
+          repository: Skrishna23/NaaP
+          ref: releasemanagement
+          token: ${{ secrets.PAT_TOKEN }}
+          run: |
+                git fetch origin "${{ env.PROPERTIES_BRANCH }}"
+      
+                if git branch -r | grep -q "origin/${{ env.PROPERTIES_BRANCH }}"; then
+                  git checkout -B "${{ env.PROPERTIES_BRANCH }}" "origin/${{ env.PROPERTIES_BRANCH }}"
+                else
+                  echo "::error::[ERROR] Properties branch '${{ env.PROPERTIES_BRANCH }}' does not exist!"
+                  exit 1
+                fi
+      
+                echo "::notice::[SUCCESS] Checked out properties folder from '${{ env.PROPERTIES_BRANCH }}'."
 
       - name: Process Property File Changes
         run: |
