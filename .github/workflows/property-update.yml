@@ -37,11 +37,6 @@ jobs:
           echo "DEBUG: Listing all remote branches..."
           git ls-remote --heads origin
 
-      - name: Fetch & Checkout Release Folder from releasemanagement Branch
-        run: |
-          set -e
-          cd gitops-repo
-
           echo "DEBUG: BASE_PATH='${{ github.event.inputs.BASE_PATH }}'"
           echo "DEBUG: RELEASE_BRANCH='${{ env.RELEASE_BRANCH }}'"
 
