@@ -80,28 +80,32 @@ jobs:
               case "$SECTION" in
                 "ADD")
                   if grep -q "^$KEY=" "$TEMP_FILE"; then
-                    echo "::error::Key '$KEY' already exists in $MATCHING_PROPERTY_FILE!" | tee -a "$LOG_FILE"
-                    exit 1
+                    echo "[SKIP] Key '$KEY' already exists in $MATCHING_PROPERTY_FILE, skipping ADD" | tee -a "$LOG_FILE"
+                  else
+                    echo "$line" >> "$TEMP_FILE"
+                    echo "[ADD] $KEY=$VALUE -> Added to $MATCHING_PROPERTY_FILE" | tee -a "$LOG_FILE"
                   fi
-                  echo "$line" >> "$TEMP_FILE"
-                  echo "[ADD] $KEY=$VALUE -> Added to $MATCHING_PROPERTY_FILE" | tee -a "$LOG_FILE"
                   ;;
                 "UPDATE")
-                  if ! grep -q "^$KEY=" "$TEMP_FILE"; then
-                    echo "::error::Key '$KEY' not found in $MATCHING_PROPERTY_FILE for update!" | tee -a "$LOG_FILE"
-                    exit 1
+                  if grep -q "^$KEY=" "$TEMP_FILE"; then
+                    OLD_VALUE=$(grep "^$KEY=" "$TEMP_FILE" | cut -d= -f2-)
+                    if [[ "$OLD_VALUE" == "$VALUE" ]]; then
+                      echo "[SKIP] Key '$KEY' already has the same value in $MATCHING_PROPERTY_FILE, skipping UPDATE" | tee -a "$LOG_FILE"
+                    else
+                      sed -i "s|^$KEY=.*|$KEY=$VALUE|" "$TEMP_FILE"
+                      echo "[UPDATE] $KEY: '$OLD_VALUE' -> '$VALUE' in $MATCHING_PROPERTY_FILE" | tee -a "$LOG_FILE"
+                    fi
+                  else
+                    echo "[SKIP] Key '$KEY' not found in $MATCHING_PROPERTY_FILE, skipping UPDATE" | tee -a "$LOG_FILE"
                   fi
-                  OLD_VALUE=$(grep "^$KEY=" "$TEMP_FILE" | cut -d= -f2-)
-                  sed -i "s|^$KEY=.*|$KEY=$VALUE|" "$TEMP_FILE"
-                  echo "[UPDATE] $KEY: '$OLD_VALUE' -> '$VALUE' in $MATCHING_PROPERTY_FILE" | tee -a "$LOG_FILE"
                   ;;
                 "REMOVE")
-                  if ! grep -q "^$KEY=" "$TEMP_FILE"; then
-                    echo "::error::Key '$KEY' not found in $MATCHING_PROPERTY_FILE for removal!" | tee -a "$LOG_FILE"
-                    exit 1
+                  if grep -q "^$KEY=" "$TEMP_FILE"; then
+                    sed -i "/^$KEY=/d" "$TEMP_FILE"
+                    echo "[REMOVE] $KEY removed from $MATCHING_PROPERTY_FILE" | tee -a "$LOG_FILE"
+                  else
+                    echo "[SKIP] Key '$KEY' not found in $MATCHING_PROPERTY_FILE, skipping REMOVE" | tee -a "$LOG_FILE"
                   fi
-                  sed -i "/^$KEY=/d" "$TEMP_FILE"
-                  echo "[REMOVE] $KEY removed from $MATCHING_PROPERTY_FILE" | tee -a "$LOG_FILE"
                   ;;
               esac
             done < "$FILE_PATH"
