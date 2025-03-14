@@ -38,6 +38,7 @@ jobs:
       
                 if git branch -r | grep -q "origin/${{ env.PROPERTIES_BRANCH }}"; then
                   git checkout -B "${{ env.PROPERTIES_BRANCH }}" "origin/${{ env.PROPERTIES_BRANCH }}"
+                  ls -lta
                 else
                   echo "::error::[ERROR] Properties branch '${{ env.PROPERTIES_BRANCH }}' does not exist!"
                   exit 1
