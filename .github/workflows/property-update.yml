@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITOPS_REPO: "Skrishna23/Project_NaaP"  # 🔹 GitOps repository
-      RELEASE_BRANCH: "Release"              # 🔹 Branch containing the release folder
+      RELEASE_BRANCH: "Release-branch"              # 🔹 Branch containing the release folder
       PROPERTIES_BRANCH: "dev-properties"     # 🔹 Branch containing the properties folder
 
     steps:
