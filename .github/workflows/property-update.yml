@@ -34,12 +34,6 @@ jobs:
           git clone --depth 1 https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ env.GITOPS_REPO }}.git gitops-repo
           cd gitops-repo
 
-
-      - name: Fetch & Checkout Properties Folder from dev-properties Branch
-        run: |
-          set -e
-          cd gitops-repo
-
           git fetch origin "${{ env.PROPERTIES_BRANCH }}"
 
           if git branch -r | grep -q "origin/${{ env.PROPERTIES_BRANCH }}"; then
