@@ -34,11 +34,15 @@ jobs:
           echo "Cloning GitOps repository '$GITOPS_REPO'..."
           git clone --bare https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/$GITOPS_REPO.git gitops-repo 
           cd gitops-repo
+          echo "Fetching and checking out release branch: $RELEASE_BRANCH"
+          git fetch origin $RELEASE_BRANCH
+          git checkout $RELEASE_BRANCH
           
           if [ ! -d "$BASE_PATH" ]; then
             echo "::error::[ERROR] Release folder does not exist in branch: $RELEASE_BRANCH"
             exit 1
           fi
+          echo "::notice::[SUCCESS] Release folder '$BASE_PATH' exists. Proceeding..."
       - name: Fetch & Checkout Release Folder from Release Branch
         run: |
           set -e
