@@ -34,29 +34,7 @@ jobs:
           git clone --depth 1 https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ env.GITOPS_REPO }}.git gitops-repo
           cd gitops-repo
 
-      - name: Fetch & Checkout Release Folder from releasemanagement Branch
-        run: |
-          set -e
-          cd gitops-repo
 
-          echo "DEBUG: Fetching release branch '${{ env.RELEASE_BRANCH }}'"
-          git fetch --all --prune
-
-          # Debug: List all remote branches
-          echo "DEBUG: Available branches after fetch:"
-          git branch -r
-
-          # Check if remote branch exists before trying to checkout
-          if git ls-remote --heads origin "${{ env.RELEASE_BRANCH }}" | grep -q "refs/heads/${{ env.RELEASE_BRANCH }}"; then
-            echo "::notice::[SUCCESS] Found remote branch '${{ env.RELEASE_BRANCH }}'. Checking out..."
-            git checkout -B "${{ env.RELEASE_BRANCH }}" "origin/${{ env.RELEASE_BRANCH }}"
-            git pull origin "${{ env.RELEASE_BRANCH }}"
-          else
-            echo "::error::[ERROR] Release branch '${{ env.RELEASE_BRANCH }}' does not exist in remote repository!"
-            echo "Create it using: git checkout -b releasemanagement && git push origin releasemanagement"
-            exit 1
-          fi
-          
       - name: Fetch & Checkout Properties Folder from dev-properties Branch
         run: |
           set -e
