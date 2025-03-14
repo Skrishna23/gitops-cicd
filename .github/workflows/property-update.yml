@@ -48,18 +48,16 @@ jobs:
           # Fetch all branches
           git fetch --all
 
-          # List all remote branches to debug
+          # List all remote branches for debugging
           echo "DEBUG: Available branches:"
           git branch -r
 
-          # Check if the release branch exists remotely
-          if git branch -r | grep -q "origin/${{ env.RELEASE_BRANCH }}"; then
-            echo "::notice::[SUCCESS] Found remote branch '${{ env.RELEASE_BRANCH }}'. Checking out..."
+          # Ensure we have a tracking branch locally
+          if git show-ref --verify --quiet refs/heads/"${{ env.RELEASE_BRANCH }}"; then
             git checkout "${{ env.RELEASE_BRANCH }}"
             git pull origin "${{ env.RELEASE_BRANCH }}"
           else
-            echo "::error::[ERROR] Release branch '${{ env.RELEASE_BRANCH }}' does not exist in remote repository!"
-            exit 1
+            git checkout -b "${{ env.RELEASE_BRANCH }}" origin/"${{ env.RELEASE_BRANCH }}"
           fi
 
           # Verify if the release folder exists
@@ -69,6 +67,7 @@ jobs:
           fi
 
           echo "::notice::[SUCCESS] Checked out release folder from '${{ env.RELEASE_BRANCH }}'."
+
 
 
       - name: Fetch & Checkout Properties Folder from dev-properties Branch
