@@ -23,34 +23,35 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Clone GitOps Repository (Without Checking Out Files)
+      - name: Clone GitOps Repository
         run: |
           set -e
           GITOPS_REPO="Skrishna23/Project_NaaP"
-          RELEASE_BRANCH="Release-branch"   # 🔹 Branch containing the release folder
-          PROPERTIES_BRANCH="dev-properties"  # 🔹 Branch containing the properties folder
+          RELEASE_BRANCH="Release"   # 🔹 Ensure this branch exists
+          PROPERTIES_BRANCH="dev-properties"
           BASE_PATH="${{ github.event.inputs.BASE_PATH }}"
 
           echo "Cloning GitOps repository '$GITOPS_REPO'..."
-          git clone --depth 1 https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/$GITOPS_REPO.git gitops-repo 
+          git clone --depth 1 https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/$GITOPS_REPO.git gitops-repo
+
           cd gitops-repo
-          echo "Fetching and checking out release branch: $RELEASE_BRANCH"
-          git fetch origin $RELEASE_BRANCH
-          git checkout $RELEASE_BRANCH
           
-          if [ ! -d "$BASE_PATH" ]; then
-            echo "::error::[ERROR] Release folder does not exist in branch: $RELEASE_BRANCH"
+          # Validate if release branch exists
+          if ! git ls-remote --exit-code --heads origin "$RELEASE_BRANCH"; then
+            echo "::error::[ERROR] Release branch '$RELEASE_BRANCH' does not exist!"
             exit 1
           fi
-          echo "::notice::[SUCCESS] Release folder '$BASE_PATH' exists. Proceeding..."
+
+          echo "::notice::[SUCCESS] GitOps repository cloned."
+
       - name: Fetch & Checkout Release Folder from Release Branch
         run: |
           set -e
           cd gitops-repo
           git fetch origin $RELEASE_BRANCH
-          git worktree add ../release-folder $RELEASE_BRANCH
+          git checkout $RELEASE_BRANCH
 
-          if [ ! -d "../release-folder/$BASE_PATH" ]; then
+          if [ ! -d "$BASE_PATH" ]; then
             echo "::error::[ERROR] Release folder '$BASE_PATH' does not exist in branch '$RELEASE_BRANCH'!"
             exit 1
           fi
@@ -62,10 +63,10 @@ jobs:
           set -e
           cd gitops-repo
           git fetch origin $PROPERTIES_BRANCH
-          git worktree add ../properties-folder $PROPERTIES_BRANCH
+          git checkout $PROPERTIES_BRANCH
 
-          if [ ! -d "../properties-folder" ]; then
-            echo "::error::[ERROR] Properties folder is missing in branch '$PROPERTIES_BRANCH'!"
+          if [ ! -d "." ]; then
+            echo "::error::[ERROR] Properties branch '$PROPERTIES_BRANCH' is empty or missing required files!"
             exit 1
           fi
 
@@ -74,8 +75,8 @@ jobs:
       - name: Process Property File Changes
         run: |
           set -e
-          BASE_PATH="../release-folder/${{ github.event.inputs.BASE_PATH }}"
-          PROPERTIES_PATH="../properties-folder"
+          BASE_PATH="../gitops-repo/${{ github.event.inputs.BASE_PATH }}"
+          PROPERTIES_PATH="../gitops-repo"
           LOG_FILE="property_changes.log"
 
           echo "Processing changes from $BASE_PATH..." > $LOG_FILE
@@ -155,7 +156,7 @@ jobs:
 
       - name: Commit and Push Changes to Properties Branch
         run: |
-          cd properties-folder
+          cd gitops-repo
           git add -u
 
           if git diff --cached --quiet; then
