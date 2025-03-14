@@ -9,9 +9,9 @@ on:
         type: string
 
 env:
-  TARGET_REPO: "Skrishna23/NaaP"  # Change to your actual repo
-  PROPERTIES_BRANCH: "dev-properties"           # Branch where property files are stored
-  RELEASE_BRANCH: "releasemanagement" # The correct branch in the target repo
+  TARGET_REPO: "my-org/target-repo"  # Change to your actual repo
+  PROPERTIES_BRANCH: "main"           # Branch where property files are stored
+  RELEASE_BRANCH: "releasemanagement" # Branch where the release folder is stored
 
 jobs:
   update_properties:
@@ -57,7 +57,8 @@ jobs:
 
             # Ensure corresponding .properties file exists in the repo
             if [ ! -f "$MATCHING_PROPERTY_FILE" ]; then
-              echo "::error::Property file '$MATCHING_PROPERTY_FILE' not found in repo!"; exit 1;
+              echo "::error::Property file '$MATCHING_PROPERTY_FILE' not found in repo!" | tee -a "$LOG_FILE"
+              exit 1
             fi
 
             TEMP_FILE="${MATCHING_PROPERTY_FILE}.tmp"
@@ -78,16 +79,29 @@ jobs:
 
               case "$SECTION" in
                 "ADD")
-                  grep -q "^$KEY=" "$TEMP_FILE" && { echo "::error::Key '$KEY' already exists!"; exit 1; }
+                  if grep -q "^$KEY=" "$TEMP_FILE"; then
+                    echo "::error::Key '$KEY' already exists in $MATCHING_PROPERTY_FILE!" | tee -a "$LOG_FILE"
+                    exit 1
+                  fi
                   echo "$line" >> "$TEMP_FILE"
+                  echo "[ADD] $KEY=$VALUE -> Added to $MATCHING_PROPERTY_FILE" | tee -a "$LOG_FILE"
                   ;;
                 "UPDATE")
-                  grep -q "^$KEY=" "$TEMP_FILE" || { echo "::error::Key '$KEY' not found!"; exit 1; }
+                  if ! grep -q "^$KEY=" "$TEMP_FILE"; then
+                    echo "::error::Key '$KEY' not found in $MATCHING_PROPERTY_FILE for update!" | tee -a "$LOG_FILE"
+                    exit 1
+                  fi
+                  OLD_VALUE=$(grep "^$KEY=" "$TEMP_FILE" | cut -d= -f2-)
                   sed -i "s|^$KEY=.*|$KEY=$VALUE|" "$TEMP_FILE"
+                  echo "[UPDATE] $KEY: '$OLD_VALUE' -> '$VALUE' in $MATCHING_PROPERTY_FILE" | tee -a "$LOG_FILE"
                   ;;
                 "REMOVE")
-                  grep -q "^$KEY=" "$TEMP_FILE" || { echo "::error::Key '$KEY' not found!"; exit 1; }
+                  if ! grep -q "^$KEY=" "$TEMP_FILE"; then
+                    echo "::error::Key '$KEY' not found in $MATCHING_PROPERTY_FILE for removal!" | tee -a "$LOG_FILE"
+                    exit 1
+                  fi
                   sed -i "/^$KEY=/d" "$TEMP_FILE"
+                  echo "[REMOVE] $KEY removed from $MATCHING_PROPERTY_FILE" | tee -a "$LOG_FILE"
                   ;;
               esac
             done < "$FILE_PATH"
