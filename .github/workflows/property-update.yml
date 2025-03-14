@@ -9,8 +9,8 @@ on:
         type: string
 
 env:
-  TARGET_REPO: "my-org/target-repo"  # Change to your actual repo
-  PROPERTIES_BRANCH: "main"           # Branch where property files are stored
+  TARGET_REPO: "Skrishna23/NaaP"  # Change to your actual repo
+  PROPERTIES_BRANCH: "dev-properties"           # Branch where property files are stored
   RELEASE_BRANCH: "releasemanagement" # Branch where the release folder is stored
 
 jobs:
