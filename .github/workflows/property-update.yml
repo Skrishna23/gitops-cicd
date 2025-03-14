@@ -9,8 +9,8 @@ on:
         type: string
 
 env:
-  TARGET_REPO: "my-org/target-repo"  # Change to your actual repo
-  PROPERTIES_BRANCH: "main"           # Change to your actual branch
+  TARGET_REPO: "Skrishna23/NaaP"  # Change to your actual repo
+  PROPERTIES_BRANCH: "dev-properties"           # Change to your actual branch
 
 jobs:
   update_properties:
