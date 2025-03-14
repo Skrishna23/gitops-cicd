@@ -55,15 +55,26 @@ jobs:
             exit 1
           fi
 
-          git fetch origin "${{ env.RELEASE_BRANCH }}"
-          git checkout "${{ env.RELEASE_BRANCH }}"
+          # Fetch the latest changes from remote
+          git fetch origin
 
+          # Check if the branch exists remotely
+          if git show-ref --verify --quiet refs/remotes/origin/"${{ env.RELEASE_BRANCH }}"; then
+            git checkout -f "${{ env.RELEASE_BRANCH }}"
+            git pull origin "${{ env.RELEASE_BRANCH }}"
+          else
+            echo "::error::[ERROR] Release branch '${{ env.RELEASE_BRANCH }}' does not exist in remote repository!"
+            exit 1
+          fi
+
+          # Verify if the release folder exists
           if [ ! -d "${{ github.event.inputs.BASE_PATH }}" ]; then
             echo "::error::[ERROR] Release folder '${{ github.event.inputs.BASE_PATH }}' does not exist in branch '${{ env.RELEASE_BRANCH }}'!"
             exit 1
           fi
 
           echo "::notice::[SUCCESS] Checked out release folder from '${{ env.RELEASE_BRANCH }}'."
+
 
       - name: Fetch & Checkout Properties Folder from Properties Branch
         run: |
