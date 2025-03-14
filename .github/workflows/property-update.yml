@@ -40,21 +40,30 @@ jobs:
           cd gitops-repo
 
           echo "DEBUG: Fetching release branch '${{ env.RELEASE_BRANCH }}'"
-          git fetch origin "${{ env.RELEASE_BRANCH }}"
+          git fetch --all --prune
 
-          if git branch -r | grep -q "origin/${{ env.RELEASE_BRANCH }}"; then
+          # Debug: List all remote branches
+          echo "DEBUG: Available branches after fetch:"
+          git branch -r
+
+          # Ensure we correctly reference the remote branch
+          if git ls-remote --heads origin | grep -q "refs/heads/${{ env.RELEASE_BRANCH }}"; then
+            echo "::notice::[SUCCESS] Found remote branch '${{ env.RELEASE_BRANCH }}'. Checking out..."
             git checkout -B "${{ env.RELEASE_BRANCH }}" "origin/${{ env.RELEASE_BRANCH }}"
+            git pull origin "${{ env.RELEASE_BRANCH }}"
           else
-            echo "::error::[ERROR] Release branch '${{ env.RELEASE_BRANCH }}' does not exist!"
+            echo "::error::[ERROR] Release branch '${{ env.RELEASE_BRANCH }}' does not exist in remote repository!"
             exit 1
           fi
 
+          # Verify if the release folder exists
           if [ ! -d "${{ github.event.inputs.BASE_PATH }}" ]; then
             echo "::error::[ERROR] Release folder '${{ github.event.inputs.BASE_PATH }}' does not exist!"
             exit 1
           fi
 
           echo "::notice::[SUCCESS] Checked out release folder from '${{ env.RELEASE_BRANCH }}'."
+
 
       - name: Fetch & Checkout Properties Folder from dev-properties Branch
         run: |
