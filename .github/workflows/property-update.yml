@@ -43,7 +43,7 @@ jobs:
 
           [ -d "$BASE_PATH" ] || { echo "::error::[ERROR] Release folder does not exist: $BASE_PATH"; exit 1; }
 
-      - name: Process Property File Changes
+      - name: Process Property File Changes (Match Without Extensions)
         run: |
           BASE_PATH="${{ github.event.inputs.BASE_PATH }}"
           FULL_PATH="$GITHUB_WORKSPACE/$BASE_PATH"
@@ -51,13 +51,17 @@ jobs:
 
           echo "Processing property file changes..." > "$LOG_FILE"
 
-          find "$FULL_PATH" -type f -name "*.properties" | while read -r FILE_PATH; do
+          find "$FULL_PATH" -type f | while read -r FILE_PATH; do
             FILE_NAME=$(basename "$FILE_PATH")
+            MATCHING_PROPERTY_FILE="$FILE_NAME.properties"
 
-            [ -f "$FILE_NAME" ] || { echo "::error::Property file '$FILE_NAME' not found!"; exit 1; }
+            # Ensure corresponding .properties file exists in the repo
+            if [ ! -f "$MATCHING_PROPERTY_FILE" ]; then
+              echo "::error::Property file '$MATCHING_PROPERTY_FILE' not found in repo!"; exit 1;
+            fi
 
-            TEMP_FILE="${FILE_NAME}.tmp"
-            cp "$FILE_NAME" "$TEMP_FILE"
+            TEMP_FILE="${MATCHING_PROPERTY_FILE}.tmp"
+            cp "$MATCHING_PROPERTY_FILE" "$TEMP_FILE"
 
             SECTION=""
             while IFS= read -r line; do
@@ -88,7 +92,7 @@ jobs:
               esac
             done < "$FILE_PATH"
 
-            mv "$TEMP_FILE" "$FILE_NAME"
+            mv "$TEMP_FILE" "$MATCHING_PROPERTY_FILE"
           done
 
       - name: Display Logs
