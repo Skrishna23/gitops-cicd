@@ -55,15 +55,16 @@ jobs:
             exit 1
           fi
 
-          # Fetch the latest changes from remote
-          git fetch origin
+          # Fetch all remote branches
+          git fetch --all
 
           # Check if the branch exists remotely
-          if git show-ref --verify --quiet refs/remotes/origin/"${{ env.RELEASE_BRANCH }}"; then
-            git checkout -f "${{ env.RELEASE_BRANCH }}"
+          if git branch -r | grep -q "origin/${{ env.RELEASE_BRANCH }}"; then
+            echo "::notice::[SUCCESS] Found remote branch '${{ env.RELEASE_BRANCH }}'. Checking out..."
+            git checkout -b "${{ env.RELEASE_BRANCH }}" "origin/${{ env.RELEASE_BRANCH }}"
             git pull origin "${{ env.RELEASE_BRANCH }}"
           else
-            echo "::error::[ERROR] Release branch '${{ env.RELEASE_BRANCH }}' does not exist in remote repository!"
+            echo "::error::[ERROR] Release branch '${{ env.RELEASE_BRANCH }}' does not exist remotely!"
             exit 1
           fi
 
@@ -74,7 +75,6 @@ jobs:
           fi
 
           echo "::notice::[SUCCESS] Checked out release folder from '${{ env.RELEASE_BRANCH }}'."
-
 
       - name: Fetch & Checkout Properties Folder from Properties Branch
         run: |
