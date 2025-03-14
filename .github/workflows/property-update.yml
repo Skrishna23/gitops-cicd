@@ -32,7 +32,7 @@ jobs:
           BASE_PATH="${{ github.event.inputs.BASE_PATH }}"
 
           echo "Cloning GitOps repository '$GITOPS_REPO'..."
-          git clone --bare https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/$GITOPS_REPO.git gitops-repo 
+          git clone --depth 1 https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/$GITOPS_REPO.git gitops-repo 
           cd gitops-repo
           echo "Fetching and checking out release branch: $RELEASE_BRANCH"
           git fetch origin $RELEASE_BRANCH
