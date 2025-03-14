@@ -43,7 +43,7 @@ jobs:
 
           [ -d "$BASE_PATH" ] || { echo "::error::[ERROR] Release folder does not exist: $BASE_PATH"; exit 1; }
 
-      - name: Process Property File Changes (Match Without Extensions)
+      - name: Process Property File Changes (Strict Validation)
         run: |
           BASE_PATH="${{ github.event.inputs.BASE_PATH }}"
           FULL_PATH="$GITHUB_WORKSPACE/$BASE_PATH"
@@ -55,9 +55,8 @@ jobs:
             FILE_NAME=$(basename "$FILE_PATH")
             MATCHING_PROPERTY_FILE="$FILE_NAME.properties"
 
-            # Ensure corresponding .properties file exists in the repo
             if [ ! -f "$MATCHING_PROPERTY_FILE" ]; then
-              echo "::error::Property file '$MATCHING_PROPERTY_FILE' not found in repo!" | tee -a "$LOG_FILE"
+              echo "::error::[ERROR] Property file '$MATCHING_PROPERTY_FILE' not found in repo!" | tee -a "$LOG_FILE"
               exit 1
             fi
 
@@ -80,23 +79,25 @@ jobs:
               case "$SECTION" in
                 "ADD")
                   if grep -q "^$KEY=" "$TEMP_FILE"; then
-                    echo "[SKIP] Key '$KEY' already exists in $MATCHING_PROPERTY_FILE, skipping ADD" | tee -a "$LOG_FILE"
-                  else
-                    echo "$line" >> "$TEMP_FILE"
-                    echo "[ADD] $KEY=$VALUE -> Added to $MATCHING_PROPERTY_FILE" | tee -a "$LOG_FILE"
+                    echo "::error::[ERROR] Key '$KEY' already exists in $MATCHING_PROPERTY_FILE, ADD operation failed!" | tee -a "$LOG_FILE"
+                    exit 1
                   fi
+                  echo "$line" >> "$TEMP_FILE"
+                  echo "[ADD] $KEY=$VALUE -> Added to $MATCHING_PROPERTY_FILE" | tee -a "$LOG_FILE"
                   ;;
                 "UPDATE")
                   if grep -q "^$KEY=" "$TEMP_FILE"; then
                     OLD_VALUE=$(grep "^$KEY=" "$TEMP_FILE" | cut -d= -f2-)
                     if [[ "$OLD_VALUE" == "$VALUE" ]]; then
-                      echo "[SKIP] Key '$KEY' already has the same value in $MATCHING_PROPERTY_FILE, skipping UPDATE" | tee -a "$LOG_FILE"
+                      echo "::error::[ERROR] Key '$KEY' already has the same value in $MATCHING_PROPERTY_FILE, UPDATE operation failed!" | tee -a "$LOG_FILE"
+                      exit 1
                     else
                       sed -i "s|^$KEY=.*|$KEY=$VALUE|" "$TEMP_FILE"
                       echo "[UPDATE] $KEY: '$OLD_VALUE' -> '$VALUE' in $MATCHING_PROPERTY_FILE" | tee -a "$LOG_FILE"
                     fi
                   else
-                    echo "[SKIP] Key '$KEY' not found in $MATCHING_PROPERTY_FILE, skipping UPDATE" | tee -a "$LOG_FILE"
+                    echo "::error::[ERROR] Key '$KEY' not found in $MATCHING_PROPERTY_FILE, UPDATE operation failed!" | tee -a "$LOG_FILE"
+                    exit 1
                   fi
                   ;;
                 "REMOVE")
@@ -104,7 +105,8 @@ jobs:
                     sed -i "/^$KEY=/d" "$TEMP_FILE"
                     echo "[REMOVE] $KEY removed from $MATCHING_PROPERTY_FILE" | tee -a "$LOG_FILE"
                   else
-                    echo "[SKIP] Key '$KEY' not found in $MATCHING_PROPERTY_FILE, skipping REMOVE" | tee -a "$LOG_FILE"
+                    echo "::error::[ERROR] Key '$KEY' not found in $MATCHING_PROPERTY_FILE, REMOVE operation failed!" | tee -a "$LOG_FILE"
+                    exit 1
                   fi
                   ;;
               esac
