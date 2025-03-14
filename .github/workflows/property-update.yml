@@ -10,7 +10,8 @@ on:
 
 env:
   TARGET_REPO: "Skrishna23/NaaP"  # Change to your actual repo
-  PROPERTIES_BRANCH: "dev-properties"           # Change to your actual branch
+  PROPERTIES_BRANCH: "dev-properties"           # Branch where property files are stored
+  RELEASE_BRANCH: "releasemanagement" # The correct branch in the target repo
 
 jobs:
   update_properties:
@@ -29,16 +30,16 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Fetch and Checkout Release Folder
+      - name: Fetch and Checkout Release Folder from Target Repo
         run: |
-          RELEASE_BRANCH="${{ github.ref }}"
           BASE_PATH="${{ github.event.inputs.BASE_PATH }}"
+          RELEASE_BRANCH="${{ env.RELEASE_BRANCH }}"
 
-          echo "Fetching release branch: $RELEASE_BRANCH"
+          echo "Fetching release branch: $RELEASE_BRANCH from ${{ env.TARGET_REPO }}"
           git fetch origin "$RELEASE_BRANCH" || { echo "::error::Branch $RELEASE_BRANCH not found!"; exit 1; }
 
           echo "Checking out release folder from branch: $RELEASE_BRANCH"
-          git checkout "origin/$RELEASE_BRANCH" -- "$BASE_PATH" || { echo "::error::Release folder not found!"; exit 1; }
+          git checkout origin/"$RELEASE_BRANCH" -- "$BASE_PATH" || { echo "::error::Release folder not found in $RELEASE_BRANCH!"; exit 1; }
 
           [ -d "$BASE_PATH" ] || { echo "::error::[ERROR] Release folder does not exist: $BASE_PATH"; exit 1; }
 
