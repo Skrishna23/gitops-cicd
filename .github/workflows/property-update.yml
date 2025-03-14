@@ -48,11 +48,25 @@ jobs:
         run: |
           set -e
           cd gitops-repo
+
+          echo "DEBUG: BASE_PATH='${{ github.event.inputs.BASE_PATH }}'"
+          echo "DEBUG: RELEASE_BRANCH='${{ env.RELEASE_BRANCH }}'"
+
+          if [ -z "${{ github.event.inputs.BASE_PATH }}" ]; then
+            echo "::error::[ERROR] BASE_PATH is empty! Ensure you provide it as input."
+            exit 1
+          fi
+
+          if [ -z "${{ env.RELEASE_BRANCH }}" ]; then
+            echo "::error::[ERROR] RELEASE_BRANCH is empty! Ensure the branch exists."
+            exit 1
+          fi
+
           git fetch origin $RELEASE_BRANCH
           git checkout $RELEASE_BRANCH
 
-          if [ ! -d "$BASE_PATH" ]; then
-            echo "::error::[ERROR] Release folder '$BASE_PATH' does not exist in branch '$RELEASE_BRANCH'!"
+          if [ ! -d "${{ github.event.inputs.BASE_PATH }}" ]; then
+            echo "::error::[ERROR] Release folder '${{ github.event.inputs.BASE_PATH }}' does not exist in branch '$RELEASE_BRANCH'!"
             exit 1
           fi
 
