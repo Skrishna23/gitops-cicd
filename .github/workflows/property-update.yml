@@ -39,30 +39,15 @@ jobs:
 
           echo "DEBUG: BASE_PATH='${{ github.event.inputs.BASE_PATH }}'"
           echo "DEBUG: RELEASE_BRANCH='${{ env.RELEASE_BRANCH }}'"
+          echo "Fetching release folder from branch: $RELEASE_BRANCH"
 
-          # Fetch all branches
-          git fetch --all
+          git fetch origin "$github.event.inputs.BASE_PATH"
+          git checkout origin/"$RELEASE_BRANCH" -- "$env.RELEASE_BRANCH"
 
-          # List all remote branches for debugging
-          echo "DEBUG: Available branches:"
-          git branch -r
-
-          # Ensure we have a tracking branch locally
-          if git show-ref --verify --quiet refs/heads/"${{ env.RELEASE_BRANCH }}"; then
-            git checkout "${{ env.RELEASE_BRANCH }}"
-            git pull origin "${{ env.RELEASE_BRANCH }}"
-          else
-            git checkout -b "${{ env.RELEASE_BRANCH }}" origin/"${{ env.RELEASE_BRANCH }}"
-          fi
-
-          # Verify if the release folder exists
-          if [ ! -d "${{ github.event.inputs.BASE_PATH }}" ]; then
-            echo "::error::[ERROR] Release folder '${{ github.event.inputs.BASE_PATH }}' does not exist!"
+          if [ ! -d "$github.event.inputs.BASE_PATH" ]; then
+            echo "[ERROR] Release folder does not exist in branch: $env.RELEASE_BRANCH"
             exit 1
           fi
-
-          echo "::notice::[SUCCESS] Checked out release folder from '${{ env.RELEASE_BRANCH }}'."
-
 
 
       - name: Fetch & Checkout Properties Folder from dev-properties Branch
