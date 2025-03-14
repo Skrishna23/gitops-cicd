@@ -11,6 +11,10 @@ on:
 jobs:
   update_properties:
     runs-on: ubuntu-latest
+    env:
+      GITOPS_REPO: "Skrishna23/Project_NaaP"  # 🔹 GitOps repository
+      RELEASE_BRANCH: "Release"              # 🔹 Branch containing the release folder
+      PROPERTIES_BRANCH: "dev-properties"     # 🔹 Branch containing the properties folder
 
     steps:
       - name: Checkout CICD Repository (This Repo)
@@ -26,19 +30,13 @@ jobs:
       - name: Clone GitOps Repository
         run: |
           set -e
-          GITOPS_REPO="Skrishna23/Project_NaaP"
-          RELEASE_BRANCH="Release-branch"   # 🔹 Ensure this branch exists
-          PROPERTIES_BRANCH="dev-properties"
-          BASE_PATH="${{ github.event.inputs.BASE_PATH }}"
-
-          echo "Cloning GitOps repository '$GITOPS_REPO'..."
-          git clone --depth 1 https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/$GITOPS_REPO.git gitops-repo
-
+          echo "Cloning GitOps repository '${{ env.GITOPS_REPO }}'..."
+          git clone --depth 1 https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ env.GITOPS_REPO }}.git gitops-repo
           cd gitops-repo
-          
-          # Validate if release branch exists
-          if ! git ls-remote --exit-code --heads origin "$RELEASE_BRANCH"; then
-            echo "::error::[ERROR] Release branch '$RELEASE_BRANCH' does not exist!"
+
+          # Validate if the Release branch exists
+          if ! git ls-remote --exit-code --heads origin "${{ env.RELEASE_BRANCH }}"; then
+            echo "::error::[ERROR] Release branch '${{ env.RELEASE_BRANCH }}' does not exist!"
             exit 1
           fi
 
@@ -57,34 +55,30 @@ jobs:
             exit 1
           fi
 
-          if [ -z "${{ env.RELEASE_BRANCH }}" ]; then
-            echo "::error::[ERROR] RELEASE_BRANCH is empty! Ensure the branch exists."
-            exit 1
-          fi
-
-          git fetch origin $RELEASE_BRANCH
-          git checkout $RELEASE_BRANCH
+          git fetch origin "${{ env.RELEASE_BRANCH }}"
+          git checkout "${{ env.RELEASE_BRANCH }}"
 
           if [ ! -d "${{ github.event.inputs.BASE_PATH }}" ]; then
-            echo "::error::[ERROR] Release folder '${{ github.event.inputs.BASE_PATH }}' does not exist in branch '$RELEASE_BRANCH'!"
+            echo "::error::[ERROR] Release folder '${{ github.event.inputs.BASE_PATH }}' does not exist in branch '${{ env.RELEASE_BRANCH }}'!"
             exit 1
           fi
 
-          echo "::notice::[SUCCESS] Checked out release folder from '$RELEASE_BRANCH'."
+          echo "::notice::[SUCCESS] Checked out release folder from '${{ env.RELEASE_BRANCH }}'."
 
       - name: Fetch & Checkout Properties Folder from Properties Branch
         run: |
           set -e
           cd gitops-repo
-          git fetch origin $PROPERTIES_BRANCH
-          git checkout $PROPERTIES_BRANCH
+
+          git fetch origin "${{ env.PROPERTIES_BRANCH }}"
+          git checkout "${{ env.PROPERTIES_BRANCH }}"
 
           if [ ! -d "." ]; then
-            echo "::error::[ERROR] Properties branch '$PROPERTIES_BRANCH' is empty or missing required files!"
+            echo "::error::[ERROR] Properties branch '${{ env.PROPERTIES_BRANCH }}' is empty or missing required files!"
             exit 1
           fi
 
-          echo "::notice::[SUCCESS] Checked out properties folder from '$PROPERTIES_BRANCH'."
+          echo "::notice::[SUCCESS] Checked out properties folder from '${{ env.PROPERTIES_BRANCH }}'."
 
       - name: Process Property File Changes
         run: |
@@ -177,5 +171,5 @@ jobs:
             echo "No changes detected, skipping commit."
           else
             git commit -m "Updated properties from release: ${{ github.event.inputs.BASE_PATH }}"
-            git push origin $PROPERTIES_BRANCH
+            git push origin "${{ env.PROPERTIES_BRANCH }}"
           fi
