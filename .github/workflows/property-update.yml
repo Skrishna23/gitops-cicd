@@ -50,21 +50,38 @@ jobs:
           fi
 
 
-      - name: Fetch & Checkout Properties Folder from dev-properties Branch
+      - name: Fetch & Checkout Release Folder from releasemanagement Branch
         run: |
           set -e
           cd gitops-repo
 
-          git fetch origin "${{ env.PROPERTIES_BRANCH }}"
+          echo "DEBUG: BASE_PATH='${{ github.event.inputs.BASE_PATH }}'"
+          echo "DEBUG: RELEASE_BRANCH='${{ env.RELEASE_BRANCH }}'"
 
-          if git branch -r | grep -q "origin/${{ env.PROPERTIES_BRANCH }}"; then
-            git checkout -b "${{ env.PROPERTIES_BRANCH }}" "origin/${{ env.PROPERTIES_BRANCH }}"
+          # Fetch all branches
+          git fetch --all --prune
+
+          # Debug: List all remote branches
+          echo "DEBUG: Available branches:"
+          git branch -r
+
+          # Check if the branch exists remotely and check it out properly
+          if git branch -r | grep -q "origin/${{ env.RELEASE_BRANCH }}"; then
+            echo "::notice::[SUCCESS] Found remote branch '${{ env.RELEASE_BRANCH }}'. Checking out..."
+            git checkout -B "${{ env.RELEASE_BRANCH }}" "origin/${{ env.RELEASE_BRANCH }}"
+            git pull origin "${{ env.RELEASE_BRANCH }}"
           else
-            echo "::error::[ERROR] Properties branch '${{ env.PROPERTIES_BRANCH }}' does not exist!"
+            echo "::error::[ERROR] Release branch '${{ env.RELEASE_BRANCH }}' does not exist in remote repository!"
             exit 1
           fi
 
-          echo "::notice::[SUCCESS] Checked out properties folder from '${{ env.PROPERTIES_BRANCH }}'."
+          # Verify if the release folder exists
+          if [ ! -d "${{ github.event.inputs.BASE_PATH }}" ]; then
+            echo "::error::[ERROR] Release folder '${{ github.event.inputs.BASE_PATH }}' does not exist!"
+            exit 1
+          fi
+
+          echo "::notice::[SUCCESS] Checked out release folder from '${{ env.RELEASE_BRANCH }}'."
 
       - name: Process Property File Changes
         run: |
