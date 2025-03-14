@@ -12,12 +12,12 @@ jobs:
   update_properties:
     runs-on: ubuntu-latest
     env:
-      GITOPS_REPO: "Skrishna23/Project_NaaP"  # 🔹 Replace with actual repo
+      GITOPS_REPO: "YourUsername/GitOpsRepo"  # 🔹 Replace with actual repo name
       RELEASE_BRANCH: "releasemanagement"
       PROPERTIES_BRANCH: "dev-properties"
 
     steps:
-      - name: Checkout CICD Repository
+      - name: Checkout CICD Repository (This Repo)
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.PAT_TOKEN }}
@@ -34,54 +34,43 @@ jobs:
           git clone --depth 1 https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ env.GITOPS_REPO }}.git gitops-repo
           cd gitops-repo
 
-          echo "DEBUG: Listing all remote branches..."
-          git ls-remote --heads origin
-
-          echo "DEBUG: BASE_PATH='${{ github.event.inputs.BASE_PATH }}'"
-          echo "DEBUG: RELEASE_BRANCH='${{ env.RELEASE_BRANCH }}'"
-          echo "Fetching release folder from branch: $env.RELEASE_BRANCH"
-
-          git fetch origin "$github.event.inputs.BASE_PATH"
-          git checkout origin/"$RELEASE_BRANCH" -- "$env.RELEASE_BRANCH"
-
-          if [ ! -d "$github.event.inputs.BASE_PATH" ]; then
-            echo "[ERROR] Release folder does not exist in branch: $env.RELEASE_BRANCH"
-            exit 1
-          fi
-
-
       - name: Fetch & Checkout Release Folder from releasemanagement Branch
         run: |
           set -e
           cd gitops-repo
 
-          echo "DEBUG: BASE_PATH='${{ github.event.inputs.BASE_PATH }}'"
-          echo "DEBUG: RELEASE_BRANCH='${{ env.RELEASE_BRANCH }}'"
+          echo "DEBUG: Fetching release branch '${{ env.RELEASE_BRANCH }}'"
+          git fetch origin "${{ env.RELEASE_BRANCH }}"
 
-          # Fetch all branches
-          git fetch --all --prune
-
-          # Debug: List all remote branches
-          echo "DEBUG: Available branches:"
-          git branch -r
-
-          # Check if the branch exists remotely and check it out properly
           if git branch -r | grep -q "origin/${{ env.RELEASE_BRANCH }}"; then
-            echo "::notice::[SUCCESS] Found remote branch '${{ env.RELEASE_BRANCH }}'. Checking out..."
             git checkout -B "${{ env.RELEASE_BRANCH }}" "origin/${{ env.RELEASE_BRANCH }}"
-            git pull origin "${{ env.RELEASE_BRANCH }}"
           else
-            echo "::error::[ERROR] Release branch '${{ env.RELEASE_BRANCH }}' does not exist in remote repository!"
+            echo "::error::[ERROR] Release branch '${{ env.RELEASE_BRANCH }}' does not exist!"
             exit 1
           fi
 
-          # Verify if the release folder exists
           if [ ! -d "${{ github.event.inputs.BASE_PATH }}" ]; then
             echo "::error::[ERROR] Release folder '${{ github.event.inputs.BASE_PATH }}' does not exist!"
             exit 1
           fi
 
           echo "::notice::[SUCCESS] Checked out release folder from '${{ env.RELEASE_BRANCH }}'."
+
+      - name: Fetch & Checkout Properties Folder from dev-properties Branch
+        run: |
+          set -e
+          cd gitops-repo
+
+          git fetch origin "${{ env.PROPERTIES_BRANCH }}"
+
+          if git branch -r | grep -q "origin/${{ env.PROPERTIES_BRANCH }}"; then
+            git checkout -B "${{ env.PROPERTIES_BRANCH }}" "origin/${{ env.PROPERTIES_BRANCH }}"
+          else
+            echo "::error::[ERROR] Properties branch '${{ env.PROPERTIES_BRANCH }}' does not exist!"
+            exit 1
+          fi
+
+          echo "::notice::[SUCCESS] Checked out properties folder from '${{ env.PROPERTIES_BRANCH }}'."
 
       - name: Process Property File Changes
         run: |
