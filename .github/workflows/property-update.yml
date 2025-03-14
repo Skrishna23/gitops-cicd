@@ -39,7 +39,7 @@ jobs:
 
           echo "DEBUG: BASE_PATH='${{ github.event.inputs.BASE_PATH }}'"
           echo "DEBUG: RELEASE_BRANCH='${{ env.RELEASE_BRANCH }}'"
-          echo "Fetching release folder from branch: $RELEASE_BRANCH"
+          echo "Fetching release folder from branch: $env.RELEASE_BRANCH"
 
           git fetch origin "$github.event.inputs.BASE_PATH"
           git checkout origin/"$RELEASE_BRANCH" -- "$env.RELEASE_BRANCH"
