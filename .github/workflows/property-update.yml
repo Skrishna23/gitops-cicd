@@ -27,7 +27,7 @@ jobs:
         run: |
           set -e
           GITOPS_REPO="Skrishna23/Project_NaaP"
-          RELEASE_BRANCH="Release"   # 🔹 Ensure this branch exists
+          RELEASE_BRANCH="Release-branch"   # 🔹 Ensure this branch exists
           PROPERTIES_BRANCH="dev-properties"
           BASE_PATH="${{ github.event.inputs.BASE_PATH }}"
 
