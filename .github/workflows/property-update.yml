@@ -27,7 +27,7 @@ jobs:
         run: |
           set -e
           GITOPS_REPO="Skrishna23/Project_NaaP"
-          RELEASE_BRANCH="Release"   # 🔹 Branch containing the release folder
+          RELEASE_BRANCH="Release-branch"   # 🔹 Branch containing the release folder
           PROPERTIES_BRANCH="dev-properties"  # 🔹 Branch containing the properties folder
           BASE_PATH="${{ github.event.inputs.BASE_PATH }}"
 
